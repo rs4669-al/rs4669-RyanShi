@@ -58,7 +58,11 @@ public final class SupportedResponse {
         return categories;
     }
 
-
+    /**
+     * Sets the Categories. 
+     * 
+     * @param categories the set categories 
+     */
     public void setCategories(
         final List<String> categories
     ) {
