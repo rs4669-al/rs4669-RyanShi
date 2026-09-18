@@ -1,0 +1,12 @@
+Academic Honesty Pledge
+
+I, Ryan Shi (rs4669), affirm that I have read and understand
+the course's academic honesty policy and that I have completed Individual
+Assignment #1 in accordance with that policy.
+
+I understand that AI tools and services are not permitted for Assignment #1.
+I also understand that any outside sources that I consult must be
+documented in citations.txt.
+
+I affirm that the work submitted in this repository follows the course's
+academic honesty requirements.

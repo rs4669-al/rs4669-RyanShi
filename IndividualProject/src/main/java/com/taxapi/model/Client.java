@@ -45,6 +45,11 @@ public final class Client {
     }
 
 
+    /** 
+     * Gets the setID. 
+     * 
+     * @param id get the id
+     */
     public void setId(final String id) {
         this.id = id;
     }
@@ -67,7 +72,10 @@ public final class Client {
         this.name = name;
     }
 
-
+    /** 
+     * Gets the ApiKey. 
+     * @return the apikey
+     */
     public String getApiKey() {
         return apiKey;
     }

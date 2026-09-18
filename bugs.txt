@@ -1,0 +1,53 @@
+# bugs.txt
+
+## Bugs found during testing and manual review
+
+1. TaxApiService.createClient() has the condition backwards
+
+   File: src/main/java/com/taxapi/service/TaxApiService.java
+   Method: createClient(String name)
+
+   Problem:
+   The method currently only creates a new client if the name already
+   exists. If the name is new, it returns null. This is the opposite
+   of what should happen.
+
+   For example, "Alice" already exists, so createClient("Alice")
+   creates another Alice. But createClient("Charlie") returns null
+   even though Charlie is a new name.
+
+   Fix:
+   Change `if (!nameExists)` to `if (nameExists)` so that duplicate
+   names are rejected and new names can be created.
+
+2. ApiController.createClient() gives the wrong result because of bug #1
+
+   File: src/main/java/com/taxapi/controller/ApiController.java
+   Method: createClient(Client client)
+
+   Problem:
+   Because createClient() in the service has its condition backwards,
+   the API also gives the wrong result. A new client name gets a
+   409 CONFLICT, while an existing name gets a 200 OK and creates
+   another client with the same name.
+
+   Fix:
+   This should be fixed by correcting the condition in
+   TaxApiService.createClient(). No separate controller change should
+   be needed.
+
+3. Item.getId() returns the item name instead of the ID
+
+   File: src/main/java/com/taxapi/model/Item.java
+   Method: getId()
+
+   Problem:
+   The getId() method returns the item's name instead of its ID.
+   This causes problems when Items are returned as JSON because the
+   "id" field can contain the item name.
+
+   This also causes problems for operations that need to find or
+   delete an item using its ID.
+
+   Fix:
+   Change `return name;` to `return id;`.
