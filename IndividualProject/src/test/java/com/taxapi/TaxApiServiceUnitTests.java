@@ -1,6 +1,8 @@
 package com.taxapi;
 
 import com.taxapi.service.TaxApiService;
+import com.taxapi.model.Client;
+import com.taxapi.model.Item;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -10,6 +12,8 @@ import org.springframework.context.annotation.Import;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Import(TestConfig.class)
@@ -37,11 +41,36 @@ class TaxApiServiceUnitTests {
         localStorageService.setDirectory(tempDir);
     }
 
-    // TODO(student): add @Test methods that exercise TaxApiService directly.
-    // The `service` field above is the autowired bean under test.
-
     @Test
     void contextLoads() {
-        // Placeholder so the test class is non-empty. Replace with real tests.
+    }
+
+    @Test
+    void createClient_existingName_createsClient() throws Exception {
+        Client created = service.createClient("Alice");
+        assertNotNull(created);
+    }
+
+    @Test
+    void validateApiKey_validKey_returnsTrue() throws Exception {
+        assertTrue(service.validateApiKey("valid-key"));
+    }
+
+    @Test
+    void validateApiKey_nullKey_returnsFalse() throws Exception {
+        assertFalse(service.validateApiKey(null));
+    }
+
+    @Test
+    void createItem_addsNewItem() throws Exception {
+        Item created = service.createItem("Desk Lamp", "electronics", 49.99);
+        assertNotNull(created);
+        assertEquals("Desk Lamp", created.getName());
+    }
+
+    @Test
+    void getItemById_found() throws Exception {
+        Item item = service.getItemById("item-1");
+        assertNotNull(item);
     }
 }
