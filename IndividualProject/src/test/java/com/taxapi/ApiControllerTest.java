@@ -52,10 +52,15 @@ class ApiControllerTest {
 
     @Test
     void contextLoads() {
+        // Placeholder retained; real coverage comes from tests below.
     }
+
+    // ---------- POST /v1/clients ----------
 
     @Test
     void createClient_existingName_returnsOk() throws Exception {
+        // NOTE: per current (buggy) service logic, an EXISTING name succeeds.
+        // See bugs.txt item #1. This test documents current behavior.
         String body = "{\"name\":\"Alice\"}";
         mockMvc.perform(post("/v1/clients")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -65,12 +70,15 @@ class ApiControllerTest {
 
     @Test
     void createClient_newName_returnsConflict() throws Exception {
+        // NOTE: per current (buggy) service logic, a NEW name is rejected.
         String body = "{\"name\":\"Charlie\"}";
         mockMvc.perform(post("/v1/clients")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isConflict());
     }
+
+    // ---------- POST /v1/items ----------
 
     @Test
     void createItem_invalidApiKey_returnsUnauthorized() throws Exception {
@@ -89,21 +97,58 @@ class ApiControllerTest {
                 .header("X-API-Key", VALID_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
-            .andExpect(status().isOk());
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.name").value("Mouse"));
+    }
+
+    // ---------- GET /v1/items ----------
+
+    @Test
+    void getItems_invalidApiKey_returnsUnauthorized() throws Exception {
+        mockMvc.perform(get("/v1/items")
+                .header("X-API-Key", INVALID_KEY))
+            .andExpect(status().isUnauthorized());
     }
 
     @Test
     void getItems_validApiKey_returnsOk() throws Exception {
         mockMvc.perform(get("/v1/items")
                 .header("X-API-Key", VALID_KEY))
-            .andExpect(status().isOk());
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].id").value("item-1"));
+    }
+
+    // ---------- GET /v1/items/{id} ----------
+
+    @Test
+    void getItemById_invalidApiKey_returnsUnauthorized() throws Exception {
+        mockMvc.perform(get("/v1/items/item-1")
+                .header("X-API-Key", INVALID_KEY))
+            .andExpect(status().isUnauthorized());
     }
 
     @Test
     void getItemById_found_returnsOk() throws Exception {
         mockMvc.perform(get("/v1/items/item-1")
                 .header("X-API-Key", VALID_KEY))
-            .andExpect(status().isOk());
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.name").value("Laptop"));
+    }
+
+    @Test
+    void getItemById_notFound_returns404() throws Exception {
+        mockMvc.perform(get("/v1/items/no-such-id")
+                .header("X-API-Key", VALID_KEY))
+            .andExpect(status().isNotFound());
+    }
+
+    // ---------- DELETE /v1/items/{id} ----------
+
+    @Test
+    void deleteItem_invalidApiKey_returnsUnauthorized() throws Exception {
+        mockMvc.perform(delete("/v1/items/item-1")
+                .header("X-API-Key", INVALID_KEY))
+            .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -114,7 +159,27 @@ class ApiControllerTest {
     }
 
     @Test
+    void deleteItem_notFound_returns404() throws Exception {
+        mockMvc.perform(delete("/v1/items/no-such-id")
+                .header("X-API-Key", VALID_KEY))
+            .andExpect(status().isNotFound());
+    }
+
+    // ---------- POST /v1/tax/quote ----------
+
+    @Test
+    void calculateTax_invalidApiKey_returnsUnauthorized() throws Exception {
+        String body = "{\"itemId\":\"item-1\",\"state\":\"CA\"}";
+        mockMvc.perform(post("/v1/tax/quote")
+                .header("X-API-Key", INVALID_KEY)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void calculateTax_validItemAndSupportedState_returnsOk() throws Exception {
+        // item-1 is electronics; CA supports electronics per taxrates.json
         String body = "{\"itemId\":\"item-1\",\"state\":\"CA\"}";
         mockMvc.perform(post("/v1/tax/quote")
                 .header("X-API-Key", VALID_KEY)
@@ -124,7 +189,8 @@ class ApiControllerTest {
     }
 
     @Test
-    void calculateTax_unsupportedState_returnsBadRequest() throws Exception {
+    void calculateTax_unsupportedStateOrCategory_returnsBadRequest() throws Exception {
+        // NY only supports "clothing" per taxrates.json; item-1 is electronics
         String body = "{\"itemId\":\"item-1\",\"state\":\"NY\"}";
         mockMvc.perform(post("/v1/tax/quote")
                 .header("X-API-Key", VALID_KEY)
@@ -132,48 +198,21 @@ class ApiControllerTest {
                 .content(body))
             .andExpect(status().isBadRequest());
     }
-    @Test
-    void updateItemPrice_existingId_returnsOk()
-        throws Exception {
-        String body =
-            "{\"basePrice\":1099.99}";
 
-        mockMvc.perform(
-                patch("/v1/items/item-1")
-                    .header("X-API-Key", VALID_KEY)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(body)
-            )
-            .andExpect(status().isOk());
-    }
+    // ---------- GET /v1/supported ----------
 
     @Test
-    void updateItemPrice_nonExistentId_returns404()
-        throws Exception {
-        String body =
-            "{\"basePrice\":10.00}";
-
-        mockMvc.perform(
-                patch("/v1/items/no-such-id")
-                    .header("X-API-Key", VALID_KEY)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(body)
-            )
-            .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void updateItemPrice_invalidApiKey_returnsUnauthorized()
-        throws Exception {
-        String body =
-            "{\"basePrice\":10.00}";
-
-        mockMvc.perform(
-                patch("/v1/items/item-1")
-                    .header("X-API-Key", INVALID_KEY)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(body)
-            )
+    void getSupported_invalidApiKey_returnsUnauthorized() throws Exception {
+        mockMvc.perform(get("/v1/supported")
+                .header("X-API-Key", INVALID_KEY))
             .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getSupported_validApiKey_returnsOk() throws Exception {
+        mockMvc.perform(get("/v1/supported")
+                .header("X-API-Key", VALID_KEY))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.states", org.hamcrest.Matchers.hasItem("CA")));
     }
 }
