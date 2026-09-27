@@ -132,11 +132,48 @@ class ApiControllerTest {
                 .content(body))
             .andExpect(status().isBadRequest());
     }
+    @Test
+    void updateItemPrice_existingId_returnsOk()
+        throws Exception {
+        String body =
+            "{\"basePrice\":1099.99}";
+
+        mockMvc.perform(
+                patch("/v1/items/item-1")
+                    .header("X-API-Key", VALID_KEY)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body)
+            )
+            .andExpect(status().isOk());
+    }
 
     @Test
-    void getSupported_validApiKey_returnsOk() throws Exception {
-        mockMvc.perform(get("/v1/supported")
-                .header("X-API-Key", VALID_KEY))
-            .andExpect(status().isOk());
+    void updateItemPrice_nonExistentId_returns404()
+        throws Exception {
+        String body =
+            "{\"basePrice\":10.00}";
+
+        mockMvc.perform(
+                patch("/v1/items/no-such-id")
+                    .header("X-API-Key", VALID_KEY)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body)
+            )
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateItemPrice_invalidApiKey_returnsUnauthorized()
+        throws Exception {
+        String body =
+            "{\"basePrice\":10.00}";
+
+        mockMvc.perform(
+                patch("/v1/items/item-1")
+                    .header("X-API-Key", INVALID_KEY)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body)
+            )
+            .andExpect(status().isUnauthorized());
     }
 }

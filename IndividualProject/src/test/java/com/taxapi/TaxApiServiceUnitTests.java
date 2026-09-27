@@ -73,4 +73,25 @@ class TaxApiServiceUnitTests {
         Item item = service.getItemById("item-1");
         assertNotNull(item);
     }
+        @Test
+    void updateItemPrice_existingId_updatesAndReturnsItem()
+        throws Exception {
+        Item updated =
+            service.updateItemPrice("item-1", 1099.99);
+
+        assertNotNull(updated);
+        assertEquals(1099.99, updated.getBasePrice());
+    }
+
+    @Test
+    void updateItemPrice_nonExistentId_returnsNull()
+        throws Exception {
+        Item updated =
+            service.updateItemPrice(
+                "no-such-id",
+                10.00
+            );
+
+        assertNull(updated);
+    }
 }
