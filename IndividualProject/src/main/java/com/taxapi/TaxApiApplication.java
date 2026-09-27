@@ -22,5 +22,5 @@ public final class TaxApiApplication {
         SpringApplication.run(
             TaxApiApplication.class, args
         );
-    }
+}
 }

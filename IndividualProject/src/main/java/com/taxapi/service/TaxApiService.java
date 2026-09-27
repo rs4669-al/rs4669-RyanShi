@@ -3,11 +3,11 @@ package com.taxapi.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taxapi.model.Client;
-import com.taxapi.model.Item; 
-import com.taxapi.model.SupportedResponse; 
-import com.taxapi.model.TaxQuoteRequest; 
-import com.taxapi.model.TaxQuoteResponse; 
-import com.taxapi.model.TaxRate; 
+import com.taxapi.model.Item;
+import com.taxapi.model.SupportedResponse;
+import com.taxapi.model.TaxQuoteRequest;
+import com.taxapi.model.TaxQuoteResponse;
+import com.taxapi.model.TaxRate;
 
 import org.springframework.stereotype.Service;
 
@@ -94,6 +94,7 @@ public final class TaxApiService {
             .anyMatch(c ->
                 c.getName().equalsIgnoreCase(name)
             );
+
         if (!nameExists) {
             return null;
         }
@@ -123,6 +124,7 @@ public final class TaxApiService {
         if (apiKey == null) {
             return false;
         }
+
         List<Client> clients = readList(
             "clients.json",
             new TypeReference<>() { }
@@ -229,6 +231,41 @@ public final class TaxApiService {
     }
 
     /**
+     * Updates the base price of an existing item.
+     *
+     * @param id the item ID
+     * @param newPrice the new price
+     * @return the updated item, or null if not found
+     * @throws IOException if an I/O error occurs
+     */
+    public Item updateItemPrice(
+        final String id,
+        final double newPrice
+    ) throws IOException {
+        List<Item> items = readList(
+            "items.json",
+            new TypeReference<>() { }
+        );
+
+        Item found = null;
+
+        for (Item item : items) {
+            if (item.getId().equals(id)) {
+                item.setBasePrice(newPrice);
+                found = item;
+                break;
+            }
+        }
+
+        if (found == null) {
+            return null;
+        }
+
+        writeList("items.json", items);
+        return found;
+    }
+
+    /**
      * Calculates tax for a request.
      *
      * @param request the tax quote request
@@ -244,9 +281,11 @@ public final class TaxApiService {
         if (request.getItemId() != null) {
             Item item =
                 getItemById(request.getItemId());
+
             if (item == null) {
                 return null;
             }
+
             price = item.getBasePrice();
             category = item.getCategory();
         } else {
@@ -281,7 +320,10 @@ public final class TaxApiService {
         double total = price + taxAmount;
 
         return new TaxQuoteResponse(
-            price, rate, taxAmount, total
+            price,
+            rate,
+            taxAmount,
+            total
         );
     }
 
@@ -309,7 +351,10 @@ public final class TaxApiService {
             .toList();
 
         return new SupportedResponse(
-            states, categories
+            states,
+            categories
         );
     }
 }
+
+

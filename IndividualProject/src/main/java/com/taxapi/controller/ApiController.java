@@ -2,24 +2,28 @@ package com.taxapi.controller;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
-
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
 import com.taxapi.model.Client;
 import com.taxapi.model.Item;
 import com.taxapi.model.SupportedResponse;
 import com.taxapi.model.TaxQuoteRequest;
 import com.taxapi.model.TaxQuoteResponse;
+import com.taxapi.model.UpdatePriceRequest;
 import com.taxapi.service.TaxApiService;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,10 +36,10 @@ public final class ApiController {
     /** The tax API service. */
     private final TaxApiService taxApiService;
 
-    /** 
+    /**
      * Creates the API Controller.
-     * 
-     * @param taxApiService the tax API service 
+     *
+     * @param taxApiService the tax API service
      */
     public ApiController(
         final TaxApiService taxApiService
@@ -58,6 +62,7 @@ public final class ApiController {
             taxApiService.createClient(
                 client.getName()
             );
+
         if (createdClient == null) {
             return ResponseEntity
                 .status(HttpStatus.CONFLICT)
@@ -67,6 +72,7 @@ public final class ApiController {
                         + "already exists"
                 ));
         }
+
         return ResponseEntity.ok(createdClient);
     }
 
@@ -89,34 +95,94 @@ public final class ApiController {
                 .status(HttpStatus.UNAUTHORIZED)
                 .build();
         }
+
         Item createdItem = taxApiService.createItem(
             item.getName(),
             item.getCategory(),
             item.getBasePrice()
         );
+
         return ResponseEntity.ok(createdItem);
     }
 
-
     /**
-     * gets all items.
+     * Gets all items, optionally filtered by category
+     * and/or name.
      *
-     * @param apiKey 
-     * @return list of items
+     * @param apiKey the API key
+     * @param category optional category filter
+     * @param q optional name search
+     * @return list of matching items
      * @throws IOException if an I/O error occurs
      */
     @GetMapping("/items")
     public ResponseEntity<List<Item>> getItems(
         @RequestHeader("X-API-Key")
-        final String apiKey
+        final String apiKey,
+        @RequestParam(required = false)
+        final String category,
+        @RequestParam(required = false)
+        final String q
     ) throws IOException {
         if (!taxApiService.validateApiKey(apiKey)) {
             return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .build();
         }
+
         List<Item> items = taxApiService.getItems();
-        return ResponseEntity.ok(items);
+        List<Item> filtered = new ArrayList<>();
+
+        for (Item item : items) {
+            boolean matchesCategory = category == null
+                || item.getCategory()
+                    .equalsIgnoreCase(category);
+
+            boolean matchesQuery = q == null
+                || item.getName()
+                    .toLowerCase()
+                    .contains(q.toLowerCase());
+
+            if (matchesCategory && matchesQuery) {
+                filtered.add(item);
+            }
+        }
+
+        return ResponseEntity.ok(filtered);
+    }
+
+    /**
+     * Updates the base price of an existing item.
+     *
+     * @param apiKey the API key
+     * @param id the item ID
+     * @param request the price update request
+     * @return the updated item
+     * @throws IOException if an I/O error occurs
+     */
+    @PatchMapping("/items/{id}")
+    public ResponseEntity<Item> updateItemPrice(
+        @RequestHeader("X-API-Key")
+        final String apiKey,
+        @PathVariable final String id,
+        @RequestBody final UpdatePriceRequest request
+    ) throws IOException {
+        if (!taxApiService.validateApiKey(apiKey)) {
+            return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .build();
+        }
+
+        Item updated = taxApiService.updateItemPrice(
+            id,
+            request.getBasePrice()
+        );
+
+        if (updated == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(updated);
     }
 
     /**
@@ -138,18 +204,22 @@ public final class ApiController {
                 .status(HttpStatus.UNAUTHORIZED)
                 .build();
         }
+
         Item item = taxApiService.getItemById(id);
+
         if (item == null) {
             return ResponseEntity.notFound().build();
         }
+
         return ResponseEntity.ok(item);
     }
 
-    /** Deletes an item by ID.
-     * 
+    /**
+     * Deletes an item by ID.
+     *
      * @param apiKey the API key
      * @param id the item id
-     * @return them response if deleted
+     * @return the response if deleted
      * @throws IOException if an I/O error occurs
      */
     @DeleteMapping("/items/{id}")
@@ -163,11 +233,14 @@ public final class ApiController {
                 .status(HttpStatus.UNAUTHORIZED)
                 .build();
         }
+
         boolean deleted =
             taxApiService.deleteItem(id);
+
         if (!deleted) {
             return ResponseEntity.notFound().build();
         }
+
         return ResponseEntity.noContent().build();
     }
 
@@ -192,12 +265,15 @@ public final class ApiController {
                 .status(HttpStatus.UNAUTHORIZED)
                 .build();
         }
+
         TaxQuoteResponse response =
             taxApiService.calculateTax(request);
+
         if (response == null) {
             return ResponseEntity
                 .badRequest().build();
         }
+
         return ResponseEntity.ok(response);
     }
 
@@ -205,7 +281,7 @@ public final class ApiController {
      * Creates a new SupportedResponse.
      *
      * @param apiKey api key
-     * @return the supported tax juris
+     * @return the supported tax jurisdictions
      * @throws IOException if an I/O error occurs
      */
     @GetMapping("/supported")
@@ -219,8 +295,12 @@ public final class ApiController {
                 .status(HttpStatus.UNAUTHORIZED)
                 .build();
         }
+
         SupportedResponse response =
             taxApiService.getSupported();
+
         return ResponseEntity.ok(response);
     }
 }
+
+
