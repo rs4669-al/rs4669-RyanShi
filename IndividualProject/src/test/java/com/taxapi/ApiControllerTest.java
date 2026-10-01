@@ -58,20 +58,18 @@ class ApiControllerTest {
     // ---------- POST /v1/clients ----------
 
     @Test
-    void createClient_existingName_returnsOk() throws Exception {
-        // NOTE: per current (buggy) service logic, an EXISTING name succeeds.
-        // See bugs.txt item #1. This test documents current behavior.
-        String body = "{\"name\":\"Alice\"}";
+    void createClient_newName_returnsOk() throws Exception {
+        String body = "{\"name\":\"Charlie\"}";
         mockMvc.perform(post("/v1/clients")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
-            .andExpect(status().isOk());
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.name").value("Charlie"));
     }
 
     @Test
-    void createClient_newName_returnsConflict() throws Exception {
-        // NOTE: per current (buggy) service logic, a NEW name is rejected.
-        String body = "{\"name\":\"Charlie\"}";
+    void createClient_existingName_returnsConflict() throws Exception {
+        String body = "{\"name\":\"Alice\"}";
         mockMvc.perform(post("/v1/clients")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
@@ -116,6 +114,75 @@ class ApiControllerTest {
                 .header("X-API-Key", VALID_KEY))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].id").value("item-1"));
+    }
+
+    @Test
+    void getItems_categoryFilter_returnsMatchingItems() throws Exception {
+        mockMvc.perform(get("/v1/items")
+                .header("X-API-Key", VALID_KEY)
+                .param("category", "electronics"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].name").value("Laptop"));
+    }
+
+    @Test
+    void getItems_queryFilter_returnsMatchingItems() throws Exception {
+        mockMvc.perform(get("/v1/items")
+                .header("X-API-Key", VALID_KEY)
+                .param("q", "top"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].name").value("Laptop"));
+    }
+
+    @Test
+    void getItems_nonMatchingFilters_returnsEmptyList() throws Exception {
+        mockMvc.perform(get("/v1/items")
+                .header("X-API-Key", VALID_KEY)
+                .param("category", "clothing")
+                .param("q", "phone"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    void getItems_matchingCategoryButNonMatchingQuery_returnsEmptyList() throws Exception {
+        mockMvc.perform(get("/v1/items")
+                .header("X-API-Key", VALID_KEY)
+                .param("category", "electronics")
+                .param("q", "phone"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    void updateItemPrice_invalidApiKey_returnsUnauthorized() throws Exception {
+        mockMvc.perform(patch("/v1/items/item-1")
+                .header("X-API-Key", INVALID_KEY)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"basePrice\":1099.99}"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateItemPrice_found_returnsUpdatedItem() throws Exception {
+        mockMvc.perform(patch("/v1/items/item-1")
+                .header("X-API-Key", VALID_KEY)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"basePrice\":1099.99}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value("item-1"))
+            .andExpect(jsonPath("$.name").value("Laptop"))
+            .andExpect(jsonPath("$.category").value("electronics"))
+            .andExpect(jsonPath("$.basePrice").value(1099.99));
+    }
+
+    @Test
+    void updateItemPrice_notFound_returns404() throws Exception {
+        mockMvc.perform(patch("/v1/items/no-such-id")
+                .header("X-API-Key", VALID_KEY)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"basePrice\":10.00}"))
+            .andExpect(status().isNotFound());
     }
 
     // ---------- GET /v1/items/{id} ----------
@@ -185,7 +252,9 @@ class ApiControllerTest {
                 .header("X-API-Key", VALID_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
-            .andExpect(status().isOk());
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.taxAmount").value(72.499275))
+            .andExpect(jsonPath("$.total").value(1072.489275));
     }
 
     @Test

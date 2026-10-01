@@ -3,6 +3,8 @@ package com.taxapi;
 import com.taxapi.service.TaxApiService;
 import com.taxapi.model.Client;
 import com.taxapi.model.Item;
+import com.taxapi.model.TaxQuoteRequest;
+import com.taxapi.model.TaxQuoteResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -46,9 +48,16 @@ class TaxApiServiceUnitTests {
     }
 
     @Test
-    void createClient_existingName_createsClient() throws Exception {
-        Client created = service.createClient("Alice");
+    void createClient_newName_createsClient() throws Exception {
+        Client created = service.createClient("Charlie");
         assertNotNull(created);
+        assertEquals("Charlie", created.getName());
+    }
+
+    @Test
+    void createClient_existingName_returnsNull() throws Exception {
+        Client created = service.createClient("Alice");
+        assertNull(created);
     }
 
     @Test
@@ -59,6 +68,11 @@ class TaxApiServiceUnitTests {
     @Test
     void validateApiKey_nullKey_returnsFalse() throws Exception {
         assertFalse(service.validateApiKey(null));
+    }
+
+    @Test
+    void validateApiKey_invalidKey_returnsFalse() throws Exception {
+        assertFalse(service.validateApiKey("wrong-key"));
     }
 
     @Test
@@ -73,7 +87,14 @@ class TaxApiServiceUnitTests {
         Item item = service.getItemById("item-1");
         assertNotNull(item);
     }
-        @Test
+
+    @Test
+    void getItemById_missing_returnsNull() throws Exception {
+        Item item = service.getItemById("missing");
+        assertNull(item);
+    }
+
+    @Test
     void updateItemPrice_existingId_updatesAndReturnsItem()
         throws Exception {
         Item updated =
@@ -93,5 +114,55 @@ class TaxApiServiceUnitTests {
             );
 
         assertNull(updated);
+    }
+
+    @Test
+    void calculateTax_withItemId_returnsCorrectAmounts() throws Exception {
+        TaxQuoteRequest request = new TaxQuoteRequest();
+        request.setItemId("item-1");
+        request.setState("CA");
+
+        TaxQuoteResponse response = service.calculateTax(request);
+
+        assertNotNull(response);
+        assertEquals(999.99, response.getPrice(), 0.001);
+        assertEquals(0.0725, response.getTaxRate(), 0.000001);
+        assertEquals(72.499275, response.getTaxAmount(), 0.001);
+        assertEquals(1072.489275, response.getTotal(), 0.001);
+    }
+
+    @Test
+    void calculateTax_withDirectPrice_returnsCorrectAmounts() throws Exception {
+        TaxQuoteRequest request = new TaxQuoteRequest();
+        request.setPrice(100.00);
+        request.setCategory("clothing");
+        request.setState("NY");
+
+        TaxQuoteResponse response = service.calculateTax(request);
+
+        assertNotNull(response);
+        assertEquals(100.00, response.getPrice(), 0.001);
+        assertEquals(0.04, response.getTaxRate(), 0.000001);
+        assertEquals(4.00, response.getTaxAmount(), 0.001);
+        assertEquals(104.00, response.getTotal(), 0.001);
+    }
+
+    @Test
+    void calculateTax_missingItem_returnsNull() throws Exception {
+        TaxQuoteRequest request = new TaxQuoteRequest();
+        request.setItemId("missing");
+        request.setState("CA");
+
+        assertNull(service.calculateTax(request));
+    }
+
+    @Test
+    void calculateTax_unsupportedCategory_returnsNull() throws Exception {
+        TaxQuoteRequest request = new TaxQuoteRequest();
+        request.setPrice(100.00);
+        request.setCategory("unknown");
+        request.setState("CA");
+
+        assertNull(service.calculateTax(request));
     }
 }
