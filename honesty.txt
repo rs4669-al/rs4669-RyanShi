@@ -1,12 +1,13 @@
 Academic Honesty Pledge
 
-I, Ryan Shi (rs4669), affirm that I have read and understand
-the course's academic honesty policy and that I have completed Individual
-Assignment #1 in accordance with that policy.
+I, Ryan Shi (rs4669), affirm that I have read and understand the course's academic
+honesty policy and that I completed Individual Assignment #3 in accordance with
+that policy.
 
-I understand that AI tools and services are not permitted for Assignment #1.
-I also understand that any outside sources that I consult must be
-documented in citations.txt.
+For Assignment #3, I used AI as permitted by the assignment instructions. The AI
+was used to assist with the GitHub Actions workflow, test coverage improvements,
+documentation, and the client application. I reviewed the generated work and ran
+the project checks available in my development environment.
 
-I affirm that the work submitted in this repository follows the course's
-academic honesty requirements.
+I also documented the outside technical sources used for this assignment in
+citations.txt.
