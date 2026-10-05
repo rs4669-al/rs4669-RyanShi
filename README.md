@@ -36,7 +36,7 @@ The project includes the Maven Wrapper, so Maven does not need to be installed s
 Clone the repository and enter the repository directory:
 
 ```bash
-git clone <your-repository-url>
+git clone <https://github.com/rs4669-al/rs4669-RyanShi.git>
 cd rs4669-RyanShi
 ```
 
@@ -250,10 +250,9 @@ For a demo, a non-zero combination such as California + clothing with a $100 pri
 
 ## Demo videos
 
-The assignment requires two videos, each no longer than three minutes:
+The assignment requires two videos, each no longer than three minutes, but I made all into 1:
 
-1. **Tax API service demo:** Replace this line with the Loom/video URL after recording the API endpoint demo.
-2. **Client app demo:** Replace this line with the Loom/video URL after recording the client application demo.
+https://youtu.be/mVjkSQbOM7E
 
 ### Suggested API demo
 
