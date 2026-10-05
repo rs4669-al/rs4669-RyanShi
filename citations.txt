@@ -1,3 +1,19 @@
- citations.txt
+citations.txt
 =============
-No Outside sources used. 
+
+GitHub Actions: Building and testing Java with Maven
+https://docs.github.com/en/actions/tutorials/build-and-test-code/java-with-maven
+Used as a reference for configuring the Java/Maven GitHub Actions CI workflow.
+
+GitHub Actions workflow syntax
+https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax
+Used as a reference for push and pull_request workflow triggers.
+
+Spring Framework MockMvc documentation
+https://docs.spring.io/spring/reference/testing/mockmvc.html
+Used as a reference for testing Spring MVC endpoints with MockMvc.
+
+AI assistance
+OpenAI ChatGPT
+Used for assistance with implementation, tests, CI configuration, documentation,
+and the client application, as explicitly permitted by Assignment 3.
