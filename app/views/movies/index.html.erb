@@ -2,6 +2,17 @@
 
 <h1>Movies</h1>
 
+<%= form_tag movies_path, method: :get, id: 'ratings_form', local: true do %>
+  Include:
+  <% @all_ratings.each do |rating| %>
+    <div class="form-check form-check-inline">
+      <%= check_box_tag "ratings[#{rating}]", "1", @ratings_to_show.include?(rating), class: 'form-check-input' %>
+      <%= label_tag "ratings[#{rating}]", rating, class: 'form-check-label' %>
+    </div>
+  <% end %>
+  <%= submit_tag 'Refresh', id: 'ratings_submit', class: 'btn btn-primary' %>
+<% end %>
+
 <%#  Part 2: Start here...
      The "Movie Title" and "Release Date" headers below become links that
      re-sort the table. %>
